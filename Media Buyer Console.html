@@ -1,0 +1,769 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Media Buyer Console</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: dark top bar + left section rail + light work area, same bones as XMP so the team moves between them without relearning */
+:root{
+  --nav:#161b24; --nav-fg:#e8ecf3; --nav-mut:#8d97a8;
+  --bg:#eef1f6; --surface:#ffffff; --surface2:#f6f8fb; --line:#dfe4ec;
+  --fg:#18202d; --mut:#5d6779; --accent:#2f6df6; --accent-soft:#e4ecff; --accent-fg:#ffffff;
+  --ok:#1e8e5a; --ok-bg:#d9f1e4; --warn:#9a6a00; --warn-bg:#fbeab9; --risk:#b3322a; --risk-bg:#f7d4d0; --dead:#ffffff; --dead-bg:#c4372d;
+  --info-bg:#e4ecff; --shadow:0 1px 2px rgba(20,30,50,.06);
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --nav:#0d1117; --nav-fg:#e8ecf3; --nav-mut:#7d8798;
+  --bg:#12161d; --surface:#1a2029; --surface2:#202733; --line:#2b3442;
+  --fg:#e6eaf1; --mut:#97a1b3; --accent:#6c97ff; --accent-soft:#223052; --accent-fg:#0b1220;
+  --ok:#52c789; --ok-bg:#16382a; --warn:#e5b94a; --warn-bg:#3a3012; --risk:#ff8a80; --risk-bg:#40201e; --dead:#fff; --dead-bg:#b3322a;
+  --info-bg:#223052; --shadow:none; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --nav:#0d1117; --nav-fg:#e8ecf3; --nav-mut:#7d8798;
+  --bg:#12161d; --surface:#1a2029; --surface2:#202733; --line:#2b3442;
+  --fg:#e6eaf1; --mut:#97a1b3; --accent:#6c97ff; --accent-soft:#223052; --accent-fg:#0b1220;
+  --ok:#52c789; --ok-bg:#16382a; --warn:#e5b94a; --warn-bg:#3a3012; --risk:#ff8a80; --risk-bg:#40201e; --dead:#fff; --dead-bg:#b3322a;
+  --info-bg:#223052; --shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:13px;line-height:1.45;padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--nav);color:var(--nav-fg);display:flex;align-items:center;gap:20px;padding:0 16px;height:46px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--nav)}
+.brand{font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand i{width:18px;height:18px;border-radius:4px;background:var(--accent);display:inline-block}
+.top nav{display:flex;gap:4px;overflow-x:auto;min-width:0}
+.top nav a{cursor:pointer;color:var(--nav-mut);text-decoration:none;padding:13px 10px;white-space:nowrap}
+.top nav a.on{color:var(--nav-fg);box-shadow:inset 0 -2px var(--accent)}
+.top .sp{flex:1}
+.top .me{display:flex;align-items:center;gap:8px;white-space:nowrap;color:var(--nav-mut)}
+.top .me b{color:var(--nav-fg);font-weight:500}
+.avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-weight:600;font-size:11px}
+.shell{display:grid;grid-template-columns:210px minmax(0,1fr);min-height:calc(100vh - 46px)}
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:12px 8px;position:sticky;top:calc(46px + env(safe-area-inset-top,0px));align-self:start;height:calc(100vh - 46px);overflow:auto}
+.rail h6{margin:14px 10px 6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.rail a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:6px;color:var(--fg);text-decoration:none;cursor:pointer}
+.rail a:hover{background:var(--surface2)}
+.rail a.on{background:var(--accent-soft);color:var(--accent);font-weight:500}
+.cnt{font-family:var(--mono);font-size:11px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:0 7px;color:var(--mut)}
+.cnt.hot{background:var(--risk-bg);color:var(--risk);border-color:transparent}
+main{padding:18px 20px 70px;min-width:0}
+.view{display:none}.view.on{display:block}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.ph h1{margin:0;font-size:19px;font-weight:600}
+.ph p{margin:2px 0 0;color:var(--mut)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);min-width:0}
+.card>h3{margin:0;padding:11px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.card .b{padding:14px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.stat{padding:12px 14px}.stat small{color:var(--mut);display:block}.stat b{font-size:22px;font-weight:600;font-family:var(--mono)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn.p{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.p:hover{filter:brightness(1.08)}
+.btn.d{color:var(--risk);border-color:var(--risk-bg)}
+.btn.sm{padding:3px 9px;font-size:12px}
+input[type=text],input[type=date],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 9px;min-width:0}
+input:focus,select:focus,button:focus-visible,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
+label.f>*:not(span){color:var(--fg)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th{text-align:left;font-weight:500;color:var(--mut);font-size:12px;background:var(--surface2);white-space:nowrap}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr.click{cursor:pointer}tbody tr.click:hover{background:var(--surface2)}
+.mono{font-family:var(--mono);font-size:12px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:1px 8px;border-radius:10px;font-size:12px;white-space:nowrap;background:var(--surface2);border:1px solid var(--line)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.pill.warn{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.pill.risk{background:var(--risk-bg);color:var(--risk);border-color:transparent}
+.pill.dead{background:var(--dead-bg);color:var(--dead);border-color:transparent}
+.pill.info{background:var(--info-bg);color:var(--accent);border-color:transparent}
+.pill.mute{color:var(--mut)}
+.tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:1px 6px;border-radius:4px}
+.t-b{background:var(--accent-soft);color:var(--accent)}.t-s{background:var(--warn-bg);color:var(--warn)}.t-d{background:var(--ok-bg);color:var(--ok)}
+.pipe{display:flex;gap:3px;flex-wrap:wrap}
+.pipe span{font-size:11px;padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--mut);border:1px solid var(--line)}
+.pipe span.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.pipe span.cur{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:4px 11px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.chip .cnt{background:transparent;border:0;padding:0}
+.sheet td,.sheet th{border:1px solid var(--line);padding:0}
+.sheet th{padding:6px 8px;position:sticky;top:0}
+.sheet td input{width:100%;border:0;border-radius:0;background:transparent;padding:7px 8px;min-width:110px}
+.sheet td input:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--surface)}
+.sheet td.lock{background:var(--surface2)}
+.sheet td.lock input{color:var(--mut)}
+.check{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.check:last-child{border:0}
+.ic{width:18px;height:18px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:11px;font-weight:700;margin-top:1px}
+.ic.ok{background:var(--ok-bg);color:var(--ok)}.ic.bad{background:var(--risk-bg);color:var(--risk)}.ic.wait{background:var(--warn-bg);color:var(--warn)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 12px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border:0}.seg button.on{background:var(--accent);color:var(--accent-fg)}
+.feed{display:flex;flex-direction:column}
+.feed .it{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);align-items:start}
+.feed .it:last-child{border:0}
+.feed .it b{font-weight:500}
+.feed .meta{color:var(--mut);font-size:12px;margin-top:2px}
+.act{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.note{background:var(--info-bg);color:var(--fg);border-radius:6px;padding:8px 11px;font-size:12px}
+.bar{height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;border:1px solid var(--line)}.bar i{display:block;height:100%;background:var(--accent)}
+.fab{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;border:0;border-radius:24px;background:var(--accent);color:var(--accent-fg);padding:11px 16px;font-weight:500;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.chat{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(70px + env(safe-area-inset-bottom,0px));width:340px;max-width:calc(100vw - 36px);height:430px;max-height:calc(100vh - 140px);z-index:40;display:none;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.chat.on{display:flex}
+.chat header{padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600;display:flex;justify-content:space-between}
+.chat .msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.m{padding:8px 10px;border-radius:8px;max-width:88%}.m.u{background:var(--accent);color:var(--accent-fg);align-self:flex-end}.m.a{background:var(--surface2);border:1px solid var(--line)}
+.chat form{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}.chat form input{flex:1}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--nav);color:var(--nav-fg);padding:9px 16px;border-radius:8px;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.two{display:grid;gap:14px;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+.kv{display:grid;grid-template-columns:130px minmax(0,1fr);gap:6px 12px}.kv dt{color:var(--mut)}.kv dd{margin:0}
+.pm th:first-child,.pm td:first-child{text-align:left}.pm td,.pm th{text-align:center}.pm td:first-child{text-align:left}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;height:auto;display:flex;gap:4px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px}
+  .rail h6{display:none}.rail a{white-space:nowrap}
+  .g4,.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.g2,.g21,.two{grid-template-columns:minmax(0,1fr)}
+  .top .me span{display:none}.top nav{display:none}
+  main{padding:14px 16px 80px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand"><i></i>AdOps Console</div>
+  <nav id="topnav"><a data-go="tasks" class="on">Campaigns</a><a data-go="pages">Pages</a><a data-go="accounts">Accounts</a><a data-go="alerts">Alerts</a></nav>
+  <div class="sp"></div>
+  <div class="me"><span>Media Buyer</span><b>Rohan (demo)</b><div class="avatar">R</div></div>
+</header>
+
+<div class="shell">
+<aside class="rail" id="rail">
+  <h6>Work</h6>
+  <a data-v="overview">Overview</a>
+  <a data-v="tasks">My tasks <span class="cnt">6</span></a>
+  <a data-v="new">New task</a>
+  <a data-v="review">Review queue <span class="cnt hot" id="nRev">0</span></a>
+  <h6>Monitor</h6>
+  <a data-v="live">Live campaigns <span class="cnt">14</span></a>
+  <a data-v="rules">Rejection rules</a>
+  <a data-v="alerts">Alerts <span class="cnt hot" id="nAl">0</span></a>
+  <h6>Data</h6>
+  <a data-v="pages">Pages</a>
+  <a data-v="accounts">Ad accounts</a>
+  <a data-v="templates">Templates</a>
+  <a data-v="history">History</a>
+</aside>
+
+<main>
+<!-- OVERVIEW -->
+<section class="view" id="v-overview">
+  <div class="hero">
+    <div><div class="hs">Tuesday, 20 Oct 2026</div><h1>Good afternoon, Rohan</h1><p id="heroSum"></p></div>
+    <div class="row"><button class="hb" data-go="new">+ New task</button><button class="hb" data-go="review">Review queue</button><button class="hb" data-go="rules">Rejection rules</button></div>
+  </div>
+  <div class="grid g4" style="margin-bottom:14px" id="kpis"></div>
+  <div class="grid g21" style="margin-bottom:14px">
+    <div class="grid" style="align-content:start">
+      <div class="card"><h3>Task pipeline <button class="btn sm" data-go="tasks">All tasks</button></h3><div class="b"><div class="steps" id="homePipe"></div></div></div>
+      <div class="card"><h3>Spend, last 7 days <span class="meta" style="font-weight:400;color:var(--mut)">All your accounts</span></h3><div class="b" id="spendChart"></div></div>
+      <div class="card"><h3>Page health <button class="btn sm" data-go="pages">Open pages</button></h3><div class="b" id="pgHealth"></div></div>
+    </div>
+    <div class="card" style="align-self:start"><h3>Alerts <button class="btn sm" data-gal="All">View all</button></h3>
+      <div class="tabs" id="hmTabs" style="padding:10px 14px 0"></div>
+      <div class="feed" id="hmFeed"></div></div>
+  </div>
+</section>
+
+<!-- TASKS -->
+<section class="view" id="v-tasks">
+  <div class="ph"><div><h1>My tasks</h1><p>Every campaign task you created and where it is in the flow.</p></div>
+    <div class="row"><label class="f"><span>From</span><input type="date" value="2026-10-14"></label><label class="f"><span>To</span><input type="date" value="2026-10-20"></label><button class="btn p" data-go="new" style="align-self:flex-end">+ New task</button></div></div>
+  <div class="tabs" style="margin-bottom:12px" id="taskTabs"></div>
+  <div class="card"><div class="tw"><table><thead><tr><th>Task</th><th>Product / geo</th><th>Campaigns × ads</th><th>Stage</th><th>Supplier</th><th>Designer</th><th>Updated</th></tr></thead><tbody id="taskRows"></tbody></table></div></div>
+</section>
+
+<!-- NEW TASK -->
+<section class="view" id="v-new">
+  <div class="ph"><div><h1>New campaign task</h1><p>You fill the blue columns. Supplier and designer fill their own columns. Everything is checked before it can go to review.</p></div>
+    <div class="row"><button class="btn" data-toast="Draft saved">Save draft</button><button class="btn p" data-toast="Sent to supplier and designer">Send to team</button></div></div>
+  <div class="card" style="margin-bottom:14px"><h3>Setup</h3><div class="b grid g4">
+    <label class="f"><span>Template</span><select id="ntTpl"></select></label>
+    <label class="f"><span>Date in names (auto)</span><input type="text" value="20/10" disabled></label>
+    <label class="f"><span>Parallel tabs</span><select><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5 (system max)</option></select></label>
+    <label class="f"><span>Publish</span><select><option>As soon as master approves</option><option>Schedule for a time</option></select></label>
+    <label class="f" style="grid-column:span 2"><span>Cover images</span><div class="seg" id="coverSeg"><button class="on" data-m="r">Random from folder</button><button data-m="s">Match video name</button></div></label>
+    <label class="f" id="coverFolder" style="grid-column:span 2"><span>Cover folder and repeat limit</span><div class="row"><input type="text" value="NEW TEW1 / covers (498 files)" style="flex:1"><label class="row" style="gap:6px;color:var(--fg)">Max repeats <input type="number" value="1" min="1" style="width:60px"></label></div></label>
+  </div></div>
+  <div class="card"><h3>Campaign sheet <span class="row" style="font-weight:400"><span class="tag t-b">Buyer</span><span class="tag t-s">Supplier</span><span class="tag t-d">Designer</span></span></h3>
+    <div class="tw"><table class="sheet"><thead><tr>
+      <th><span class="tag t-b">Buyer</span> Product</th><th><span class="tag t-b">Buyer</span> Promoted app / ID</th><th><span class="tag t-b">Buyer</span> Countries</th><th><span class="tag t-b">Buyer</span> Ad sets</th><th><span class="tag t-b">Buyer</span> Daily budget</th><th><span class="tag t-b">Buyer</span> Bid strategy</th><th><span class="tag t-b">Buyer</span> CPR goal</th>
+      <th><span class="tag t-s">Supplier</span> Ad account ID</th><th><span class="tag t-s">Supplier</span> Page name / ID</th>
+      <th><span class="tag t-d">Designer</span> Video range</th><th><span class="tag t-d">Designer</span> Primary text</th><th><span class="tag t-d">Designer</span> Headline</th></tr></thead>
+    <tbody>
+      <tr><td><input type="text" value="VDHP 159"></td><td><input type="text" value="VD 159 AE,SA,NL / 2079112532809195"></td><td><input type="text" value="AE, NL"></td><td><input type="number" value="2"></td><td><input type="text" value="$400"></td><td><input type="text" value="Cost cap"></td><td><input type="text" value="$0.40"></td>
+        <td class="lock"><input type="text" value="1570337628451061" readonly></td><td class="lock"><input type="text" value="Julian Young / 1323659637503856" readonly></td><td class="lock"><input type="text" value="TEW 001–030" readonly></td><td class="lock"><input type="text" value="Story set A (2,790 chars)" readonly></td><td class="lock"><input type="text" value="एक संगीत विद्यालय में गई।" readonly></td></tr>
+      <tr><td><input type="text" value="VDHP 159"></td><td><input type="text" value="VD 159 AE,SA,NL / 2079112532809195"></td><td><input type="text" value="AE, NL"></td><td><input type="number" value="2"></td><td><input type="text" value="$400"></td><td><input type="text" value="Cost cap"></td><td><input type="text" value="$0.40"></td>
+        <td class="lock"><input type="text" placeholder="waiting for supplier" readonly></td><td class="lock"><input type="text" placeholder="waiting for supplier" readonly></td><td class="lock"><input type="text" placeholder="waiting for designer" readonly></td><td class="lock"><input type="text" placeholder="waiting for designer" readonly></td><td class="lock"><input type="text" placeholder="waiting for designer" readonly></td></tr>
+    </tbody></table></div>
+    <div class="b"><div class="note">Greyed cells belong to supplier or designer and are read-only for you. Dates, naming pattern, EU beneficiary and CTA come from the template, so nobody types them.</div></div></div>
+</section>
+
+<!-- REVIEW -->
+<section class="view" id="v-review">
+  <div class="ph"><div><h1>Review queue</h1><p>Tick one or more tasks (or click a row). Each ticked task opens below, one under another, so you can check it and send it to master or back to supplier or designer.</p></div></div>
+  <div id="g-rev"></div>
+  <div class="card" style="margin-top:14px"><div class="gh"><div class="row"><span id="rvCnt"></span><span id="rvChips" class="tabs"></span></div><div class="row"><button class="btn" id="rvAiAll">AI check all open</button><button class="btn p" id="rvSubAll">Submit all open to master</button><button class="btn" id="rvCloseAll">Close all</button></div></div></div>
+  <div id="rvPanels" style="display:flex;flex-direction:column;gap:14px;margin-top:14px"></div>
+</section>
+
+<!-- LIVE -->
+<section class="view" id="v-live">
+  <div class="ph"><div><h1>Live campaigns</h1><p>Account and page health beside each campaign. Refreshed every 30 minutes by the agent.</p></div>
+    <div class="row"><label class="f"><span>Page status</span><select id="fPage"><option value="">All</option><option>No issues</option><option>Some issues</option><option>At risk</option><option>Suspended</option></select></label>
+    <label class="f"><span>Account</span><select id="fAcc"><option value="">All</option><option>Active</option><option>Disabled</option></select></label>
+    <label class="f"><span>Country</span><select><option>All</option><option>AE</option><option>NL</option><option>BR</option></select></label>
+    <label class="f"><span>Date</span><input type="date" value="2026-10-20"></label></div></div>
+  <div class="card"><div class="tw"><table><thead><tr><th>Campaign</th><th>Account</th><th>Account status</th><th>Page</th><th>Page status</th><th>Ads</th><th>Disapproved</th><th>Spend today</th></tr></thead><tbody id="liveRows"></tbody></table></div></div>
+</section>
+
+<!-- RULES -->
+<section class="view" id="v-rules">
+  <div class="ph"><div><h1>Rejection rules</h1><p>Active accounts only, disapproved ads only. You choose which ads, what to do, and how often.</p></div>
+    <div class="row"><button class="btn" data-toast="Rule saved as template">Save as template</button><button class="btn" data-toast="Dry run: 9 ads matched, nothing changed">Dry run</button><button class="btn p" data-toast="Rule started">Start rule</button></div></div>
+  <div class="two">
+    <div class="grid">
+      <div class="card"><h3>1. Which ads</h3><div class="b grid g2">
+        <label class="f"><span>Account status</span><input type="text" value="Active (fixed)" disabled></label>
+        <label class="f"><span>Ad status</span><input type="text" value="Disapproved (fixed)" disabled></label>
+        <label class="f"><span>Product</span><select><option>Any</option><option>VDHP 159</option><option>VDHP 152</option></select></label>
+        <label class="f"><span>Country</span><select><option>Any</option><option>AE</option><option>NL</option></select></label>
+        <label class="f"><span>Ad account</span><select><option>Any of mine</option><option>1451616750162943</option></select></label>
+        <label class="f"><span>Date range</span><div class="row"><input type="date" value="2026-10-20" style="flex:1"><input type="date" value="2026-10-20" style="flex:1"></div></label>
+        <label class="f" style="grid-column:span 2"><span>Spend filter (optional)</span><div class="row"><select><option>No spend filter</option><option>Spend at least</option><option>Spend at most</option></select><input type="number" placeholder="USD" style="width:100px"></div></label>
+      </div></div>
+      <div class="card"><h3>2. What to do</h3><div class="b grid g2">
+        <label class="row" style="gap:8px"><input type="checkbox" checked> Pause the ads</label>
+        <label class="row" style="gap:8px"><input type="checkbox" checked> Replace materials</label>
+        <label class="row" style="gap:8px"><input type="checkbox"> Start ads after replacing</label>
+        <label class="f"><span>Max replace attempts per ad</span><select><option>1</option><option>2</option><option selected>3</option><option>5</option><option>Unlimited</option></select></label>
+        <label class="f"><span>Video material folder</span><select><option>Compliant videos / Oct</option><option>dummy 1</option></select></label>
+        <label class="f"><span>Image material folder</span><select><option>Compliant images / Oct</option><option>dummy 1</option></select></label>
+        <div class="note" style="grid-column:span 2">Video ads get a video, image ads get an image. An ad that still gets rejected after the max attempts is marked Needs attention and skipped.</div>
+      </div></div>
+      <div class="card"><h3>3. When and how</h3><div class="b grid g2">
+        <label class="f"><span>Frequency</span><select id="freq"><option>Run once</option><option>Every 30 minutes</option><option selected>Every 1 hour</option><option>Watch for 2 hours after publish, every 10 min</option></select></label>
+        <label class="f"><span>Batch size</span><select><option>All matching ads</option><option>50 ads</option><option>100 ads</option></select></label>
+        <label class="f" style="grid-column:span 2"><span>Approval</span><div class="seg" id="apprSeg"><button data-m="a">Fix automatically</button><button class="on" data-m="r">Show me the count first, I approve</button></div></label>
+        <label class="f"><span>Stop after</span><select><option>I stop it manually</option><option>6 hours</option><option>24 hours</option></select></label>
+        <label class="f"><span>Count rejections since</span><input type="text" value="Rule start time" disabled></label>
+      </div></div>
+    </div>
+    <div class="grid" style="align-content:start">
+      <div class="card"><h3>Templates</h3><div class="feed">
+        <div class="it"><span class="pill mute">1</span><div><b>Solve once</b><div class="meta">Run once, replace, pause. No repeat.</div></div><button class="btn sm" data-toast="Template loaded">Use</button></div>
+        <div class="it"><span class="pill mute">2</span><div><b>Auto every 30 min</b><div class="meta">Check every 30 min and fix without asking.</div></div><button class="btn sm" data-toast="Template loaded">Use</button></div>
+        <div class="it"><span class="pill mute">3</span><div><b>Hourly with approval</b><div class="meta">Check every hour, show count, fix after I approve.</div></div><button class="btn sm" data-toast="Template loaded">Use</button></div>
+      </div></div>
+      <div class="card"><h3>Waiting for your approval <span class="pill info">1</span></h3><div class="b">
+        <p style="margin:0 0 6px"><b>Hourly check</b> found <b>9 rejected ads</b> since 11:00 across 3 accounts.</p>
+        <div class="act"><button class="btn p" data-toast="Approved: replacing 9 ads">Approve and fix once</button><button class="btn" data-toast="Approved: will keep fixing every hour">Approve and keep going</button><button class="btn d" data-toast="Skipped this run">Skip</button></div></div></div>
+      <div class="card"><h3>Run log</h3><div class="tw"><table><thead><tr><th>Time</th><th>Found</th><th>Fixed</th><th>Failed</th></tr></thead><tbody>
+        <tr><td>12:00</td><td class="mono">14</td><td class="mono">14</td><td class="mono">0</td></tr>
+        <tr><td>11:00</td><td class="mono">9</td><td class="mono">8</td><td class="mono">1</td></tr>
+        <tr><td>10:00</td><td class="mono">22</td><td class="mono">22</td><td class="mono">0</td></tr></tbody></table></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ALERTS -->
+<section class="view" id="v-alerts">
+  <div class="ph"><div><h1>Alerts</h1><p>Sorted by type. Click an alert to open the place where you can fix it.</p></div><div class="row"><label class="f"><span>Severity</span><select id="alSev"><option value="">All</option><option>High</option><option>Medium</option><option>Info</option></select></label><label class="f"><span>Show</span><select id="alRead"><option value="">All</option><option value="u">Unread</option></select></label><button class="btn" id="alAll" style="align-self:flex-end">Mark all read</button></div></div>
+  <div class="tabs" id="alTabs" style="margin-bottom:12px"></div>
+  <div class="two">
+    <div class="card"><div class="feed" id="feed"></div></div>
+    <div class="card"><h3>My alert settings</h3><div class="b">
+      <div class="tw"><table class="pm"><thead><tr><th>Type</th><th>Dashboard</th><th>Telegram</th></tr></thead><tbody id="prefs"></tbody></table></div>
+      <label class="f" style="margin-top:12px"><span>Page status alerts when</span><select><option>It gets worse than before</option><option>Any change</option><option>Only At risk or Suspended</option></select></label>
+      <label class="f" style="margin-top:10px"><span>Only for</span><select><option>Pages and accounts used in my campaigns</option><option>Everything I can see</option></select></label>
+      <div class="note" style="margin-top:12px">Telegram: link your chat once. Open the bot, send /start, then paste the code shown here. <button class="btn sm" data-toast="Link code: 48-2217 (demo)">Show code</button></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- PAGES -->
+<section class="view" id="v-pages">
+  <div class="ph"><div><h1>Pages</h1><p>Read only. The agent checks status every 30 minutes and tracks which pages are used.</p></div><div class="row"><input type="text" placeholder="Search name or page ID" id="pgQ"></div></div>
+  <div class="tabs" style="margin-bottom:12px" id="pgTabs"></div>
+  <div class="card"><div class="tw"><table><thead><tr><th>Page</th><th>Page ID</th><th>Status</th><th>Reason</th><th>Use</th><th>Last used in</th><th>Checked</th></tr></thead><tbody id="pgRows"></tbody></table></div></div>
+</section>
+
+<!-- ACCOUNTS -->
+<section class="view" id="v-accounts">
+  <div class="ph"><div><h1>Ad accounts</h1><p>Read only. Filter by setup state, then by Active or Disabled.</p></div>
+    <div class="seg" id="accState"><button class="on" data-m="">All</button><button data-m="Active">Active</button><button data-m="Disabled">Disabled</button></div></div>
+  <div class="tabs" style="margin-bottom:12px" id="acTabs"></div>
+  <div class="card"><div class="tw"><table><thead><tr><th>Ad account</th><th>Profile login</th><th>Card</th><th>BM</th><th>Used</th><th>State</th><th>Checked</th></tr></thead><tbody id="acRows"></tbody></table></div></div>
+</section>
+
+<!-- TEMPLATES -->
+<section class="view" id="v-templates">
+  <div class="ph"><div><h1>Templates</h1><p>One per product and geo. A task only changes account, page, videos and date. A template can also carry its own rejection rule.</p></div><button class="btn p" id="tplNew">+ New template</button></div>
+  <div class="grid g3" id="tplGrid"></div>
+</section>
+
+<section class="view" id="v-tpledit">
+  <div class="ph"><div><h1 id="teTitle">New template</h1><p>Every field here is copied into each new task made from this template.</p></div>
+    <div class="row"><button class="btn" id="teCancel">Cancel</button><button class="btn d" id="teDel">Delete</button><button class="btn" id="teCopy">Save as copy</button><button class="btn p" id="teSave">Save template</button></div></div>
+  <div class="two">
+    <div class="grid" id="teLeft"></div>
+    <div class="grid" style="align-content:start"><div class="card" style="position:sticky;top:64px"><h3>Summary</h3><div class="b" id="teSum"></div></div></div>
+  </div>
+</section>
+
+<!-- HISTORY -->
+<section class="view" id="v-history">
+  <div class="ph"><div><h1>History</h1><p>Everything you and your team did, by date.</p></div>
+    <div class="row"><label class="f"><span>From</span><input type="date" value="2026-10-01"></label><label class="f"><span>To</span><input type="date" value="2026-10-20"></label><label class="f"><span>Type</span><select><option>All</option><option>Campaigns</option><option>Rejection runs</option><option>Alerts</option></select></label></div></div>
+  <div class="card"><div class="tw"><table><thead><tr><th>Date</th><th>What</th><th>By</th><th>Result</th></tr></thead><tbody id="histRows"></tbody></table></div></div>
+</section>
+</main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="dr"><div class="dh"><b id="drT">Bulk actions</b><button class="btn sm" id="drX">Close</button></div><div class="db" id="drB"></div></aside>
+<button class="fab" id="fab">Ask my agent</button>
+<div class="chat" id="chat"><header><span>My agent</span><button class="btn sm" id="chatX">Close</button></header>
+  <div class="msgs" id="msgs"><div class="m a">Hi Rohan. I only know your own work. Try: "which of my pages are at risk?"</div></div>
+  <form id="chatF"><input type="text" id="chatI" placeholder="Ask about your campaigns" aria-label="Message"><button class="btn p">Send</button></form></div>
+<div class="toast" id="toast"></div>
+
+<style>
+.fbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:12px 14px;border-bottom:1px solid var(--line)}
+.fbar label.f select,.fbar label.f input{min-width:110px}
+.gh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.gh .meta{color:var(--mut)}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:70;display:none}.scrim.on{display:block}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:360px;max-width:100vw;background:var(--surface);border-left:1px solid var(--line);z-index:71;transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.drawer.on{transform:none}
+.drawer .dh{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.drawer .db{padding:14px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+td.ck,th.ck{width:34px;text-align:center}
+.ra{display:flex;gap:4px;flex-wrap:nowrap}.ra .btn{padding:2px 8px;font-size:12px}.tc{padding:14px}.tc .t{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+</style>
+<style>
+.hero{background:linear-gradient(120deg,#2a58d6,#4b36c9);color:#fff;border-radius:12px;padding:22px 24px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.hero h1{margin:2px 0 4px;font-size:24px;font-weight:600;color:#fff}.hero p{margin:0;color:#e6ebff}.hero .hs{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#cdd7ff}
+.hb{border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500}.hb:hover{background:rgba(255,255,255,.26)}
+.kp{display:flex;gap:12px;align-items:flex-start;padding:14px;cursor:pointer;text-align:left;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;box-shadow:var(--shadow)}
+.kp:hover{border-color:var(--accent)}
+.kp .ic2{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-weight:700;flex:none}
+.kp small{color:var(--mut);display:block}.kp b{font-size:24px;font-weight:600;font-family:var(--mono);display:block;line-height:1.2}.kp .dl{font-size:12px;margin-top:2px}
+.kp svg{margin-left:auto;flex:none}
+.steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.steps button{border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:10px 4px;cursor:pointer;text-align:center}
+.steps button:hover{border-color:var(--accent)}.steps button b{display:block;font-size:20px;font-family:var(--mono);font-weight:600}.steps button span{font-size:11px;color:var(--mut)}
+.steps button.has{background:var(--accent-soft)}.steps button.has b{color:var(--accent)}
+.hbar{display:flex;height:14px;border-radius:7px;overflow:hidden;border:1px solid var(--line)}.hbar i{display:block}
+.lg{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}.lg button{border:0;background:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0}.lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+@media (max-width:900px){.steps{grid-template-columns:repeat(4,minmax(0,1fr))}.hero{padding:18px}}
+.aib{grid-column:1/-1;border:1px solid var(--line);background:var(--surface2);border-radius:8px;padding:10px 12px;margin:4px 0}
+.aih{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.aiau{font-size:12px;color:var(--mut);display:flex;gap:5px;align-items:center}
+.ail{margin-top:8px;display:grid;gap:6px}
+.aii{display:flex;gap:8px;align-items:center;font-size:13px}
+.aiic{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:none}
+.aiic.ok{background:var(--ok-bg);color:var(--ok)}.aiic.bad{background:var(--risk-bg);color:var(--risk)}.aiic.warn{background:var(--warn-bg);color:var(--warn)}
+.aihint{font-size:12px;color:var(--mut);margin-top:6px}
+.aiwarn{margin-top:8px;display:flex;gap:8px;align-items:center;justify-content:space-between;background:var(--risk-bg);color:var(--risk);padding:6px 10px;border-radius:6px;font-size:12px}
+</style>
+<script>
+var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var STAGES=["Draft","Supplier","Designer","Review","Master","Publishing","Live"];
+var TASKS=[
+ {id:"T-1042",p:"VDHP 159",g:"AE, NL",c:"1 × 30",s:3,sup:"Done",des:"Done",u:"12:20"},
+ {id:"T-1041",p:"VDHP 152",g:"BR",c:"2 × 60",s:3,sup:"Done",des:"Done",u:"11:05"},
+ {id:"T-1040",p:"VDHP 144",g:"BR",c:"1 × 30",s:2,sup:"Done",des:"In progress",u:"10:40"},
+ {id:"T-1039",p:"VDHP 122",g:"AE, NL",c:"1 × 30",s:1,sup:"In progress",des:"In progress",u:"09:58"},
+ {id:"T-1038",p:"VDHP 159",g:"AE, NL",c:"1 × 30",s:4,sup:"Done",des:"Done",u:"Yesterday"},
+ {id:"T-1037",p:"VDHP 152",g:"AE, NL",c:"1 × 30",s:6,sup:"Done",des:"Done",u:"Yesterday"}];
+var PRE=[["ok","Ad account is Active and logged in"],["ok","Card verified (••9229)"],["ok","Account attached to BM OMPR"],["ok","Page is in BM and status is No issues"],["ok","Promoted app found for this account"],["ok","30 videos and 30 covers present in library"],["ok","Cover repeat limit respected (max 1)"],["ok","No campaign with this name and date exists"],["ok","Budget, bid and CPR goal complete"],["wait","Page used in 1 live campaign already: confirm reuse"]];
+var LIVE=[
+ ["VD 159 AE,SA,NL || AE+NL || 19/10 || Julian Young","1570337628451061","Active","Julian Young","No issues",30,0,"$212.40"],
+ ["VD 159 AE,SA,NL || AE+NL || 18/10 || Kyle Perry","1429183675211122","Active","Kyle Perry","Some issues",30,4,"$388.10"],
+ ["VD 152 AE,NL || AE+NL || 18/10 || Noah Price","1368876882978150","Active","Noah Price","At risk",30,9,"$402.75"],
+ ["VD 144 BACK || BR || 18/10 || Isa Roper","1448025530577540","Active","Isa Roper","No issues",30,2,"$96.00"],
+ ["VD 122 AE,NL || AE+NL || 16/10 || Mullen","1251416138410807","Disabled","Mullen","Suspended",17,17,"$0.00"]];
+var PAGES=[
+ ["Julian Young","1323659637503856","No issues","","In use","VD 159 · 19/10","12 min ago"],
+ ["Noah Price","1368876882978150","At risk","Page is at risk of being unpublished, due to Community Standards violations","In use","VD 152 · 18/10","12 min ago"],
+ ["Cole Elliot Bailey","10009274118",  "Some issues","Restricted features: Recommendations","Unused","","12 min ago"],
+ ["Lucas Elliot Phillips","10008845521","At risk","Shared content against adult nudity rules","Unused","","12 min ago"],
+ ["Aaron Lewis","10007712390","Suspended","Your Page has been suspended","Retired","VD 122 · 12/10","12 min ago"],
+ ["Julian Hayes","10006631842","No issues","","Unused","","12 min ago"]];
+var ACC=[
+ ["1570337628451061","Logged in","••9229 verified","Attached","Used","Active"],
+ ["1451616750162943","Logged in","••9229 verified","Attached","Not used","Active"],
+ ["1468036252139450","Logged in","No card","Attached","Not used","Active"],
+ ["1673515281151662","Logged in","Card added, verifying","Not attached","Not used","Active"],
+ ["1067553696315661","No login","No card","Not attached","Not used","Disabled"],
+ ["1251416138410807","Logged in","••4410 verified","Attached","Used","Disabled"]];
+var TPL=[["VDHP 159 · AE+NL","2 ad sets · 30 ads each · $400 · CPR $0.40","Random covers · Install now"],["VDHP 152 · BR","2 ad sets · 30 ads each · $300 · CPR $0.35","Match covers · Install now"],["VDHP 144 · BR","1 ad set · 30 ads · $250","Random covers · Install now"]];
+var HIST=[["20 Oct","T-1042 sent to review","Rohan","In review"],["20 Oct","Rule Hourly check run (14 found)","Agent","14 fixed"],["19 Oct","T-1037 published, 30 ads","Agent","Success"],["19 Oct","T-1036 submitted to master","Rohan","Approved"],["18 Oct","Page Noah Price used in VD 152","Agent","Logged"]];
+
+function tone(s){if(s==="All passed")return "ok";if(s==="Partly checked"||s==="Issues sent")return "warn";if(s==="Issues found")return "risk";return ["No issues","Active","Passed","Submitted","Done"].indexOf(s)>-1?"ok":["To confirm","In review","Waiting"].indexOf(s)>-1?"warn":["Failed","Sent back"].indexOf(s)>-1?"risk":s==="No issues"||s==="Active"?"ok":s==="Some issues"?"warn":s==="At risk"?"risk":s==="Suspended"||s==="Disabled"?"dead":"mute"}
+function pill(t,c){return '<span class="pill '+(c||tone(t))+'">'+t+'</span>'}
+function pipe(n){return '<div class="pipe">'+STAGES.map(function(s,i){return '<span class="'+(i<n?"done":i===n?"cur":"")+'">'+s+'</span>'}).join("")+'</div>'}
+
+var toastT;function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove("on")},2200)}
+function show(v){
+  if(!$("#v-"+v))v="overview";
+  $$(".view").forEach(function(e){e.classList.toggle("on",e.id==="v-"+v)});
+  $$("#rail a").forEach(function(a){a.classList.toggle("on",a.dataset.v===v||(v==="tpledit"&&a.dataset.v==="templates"))});
+  try{history.replaceState(null,"","#"+v)}catch(e){}
+  var tm={tasks:"tasks",new:"tasks",review:"tasks",live:"tasks",rules:"tasks",templates:"tasks",tpledit:"tasks",history:"tasks",overview:"",pages:"pages",accounts:"accounts",alerts:"alerts"};
+  $$("#topnav a").forEach(function(a){a.classList.toggle("on",a.dataset.go===tm[v])});
+  window.scrollTo(0,0);
+}
+document.addEventListener("click",function(e){
+  var a=e.target.closest("[data-v]");if(a&&a.closest("#rail")){show(a.dataset.v);return}
+  var g=e.target.closest("[data-go]");if(g){show(g.dataset.go);return}
+  var t=e.target.closest("[data-toast]");if(t){toast(t.dataset.toast)}
+});
+
+/* Tasks */
+var tf="All";
+function drawTasks(){
+  var st=["All"].concat(STAGES);
+  $("#taskTabs").innerHTML=st.map(function(s,i){var n=i===0?TASKS.length:TASKS.filter(function(t){return t.s===i-1}).length;return '<button class="chip '+(s===tf?"on":"")+'" data-t="'+s+'">'+s+' <span class="cnt">'+n+'</span></button>'}).join("");
+  $("#taskRows").innerHTML=TASKS.filter(function(t){return tf==="All"||STAGES[t.s]===tf}).map(function(t){
+    return '<tr class="click" data-open="'+t.id+'"><td class="mono">'+t.id+'</td><td>'+t.p+' · '+t.g+'</td><td class="mono">'+t.c+'</td><td>'+pipe(t.s)+'</td><td>'+pill(t.sup,t.sup==="Done"?"ok":"warn")+'</td><td>'+pill(t.des,t.des==="Done"?"ok":"warn")+'</td><td>'+t.u+'</td></tr>'}).join("");
+}
+document.addEventListener("click",function(e){var c=e.target.closest("[data-t]");if(c){tf=c.dataset.t;drawTasks()}var o=e.target.closest("[data-open]");if(o){show(TASKS.filter(function(t){return t.id===o.dataset.open})[0].s===3?"review":"new")}});
+drawTasks();
+
+/* Cover + approval segmented controls */
+function seg(id,cb){var el=$(id);el.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;$$("button",el).forEach(function(x){x.classList.toggle("on",x===b)});if(cb)cb(b.dataset.m)})}
+seg("#coverSeg",function(m){$("#coverFolder span").textContent=m==="r"?"Cover folder and repeat limit":"Cover folder (matched by video name)"});
+seg("#apprSeg");
+
+/* Review */
+
+
+/* Live */
+function drawLive(){var fp=$("#fPage").value,fa=$("#fAcc").value;
+  $("#liveRows").innerHTML=LIVE.filter(function(r){return(!fp||r[4]===fp)&&(!fa||r[2]===fa)}).map(function(r){
+    return '<tr><td style="max-width:300px">'+r[0]+'</td><td class="mono">'+r[1]+'</td><td>'+pill(r[2])+'</td><td>'+r[3]+'</td><td>'+pill(r[4])+'</td><td class="mono">'+r[5]+'</td><td class="mono" style="color:'+(r[6]?"var(--risk)":"inherit")+'">'+r[6]+'</td><td class="mono">'+r[7]+'</td></tr>'}).join("")||'<tr><td colspan="8" style="color:var(--mut)">No campaigns match these filters.</td></tr>'}
+$("#fPage").addEventListener("change",drawLive);$("#fAcc").addEventListener("change",drawLive);drawLive();
+
+/* Alerts */
+
+/* Pages */
+var pgF="All";
+function drawPages(){var q=$("#pgQ").value.toLowerCase();
+  var tabs=["All","No issues","Some issues","At risk","Suspended","Unused"];
+  $("#pgTabs").innerHTML=tabs.map(function(t){var n=PAGES.filter(function(p){return t==="All"||p[2]===t||(t==="Unused"&&p[4]==="Unused")}).length;return '<button class="chip '+(t===pgF?"on":"")+'" data-pg="'+t+'">'+t+' <span class="cnt">'+n+'</span></button>'}).join("");
+  $("#pgRows").innerHTML=PAGES.filter(function(p){return(pgF==="All"||p[2]===pgF||(pgF==="Unused"&&p[4]==="Unused"))&&(!q||(p[0]+p[1]).toLowerCase().indexOf(q)>-1)}).map(function(p){
+    return '<tr><td>'+p[0]+'</td><td class="mono">'+p[1]+'</td><td>'+pill(p[2])+'</td><td style="max-width:260px;color:var(--mut)">'+(p[3]||"–")+'</td><td>'+pill(p[4],p[4]==="In use"?"info":"mute")+'</td><td>'+(p[5]||"–")+'</td><td>'+p[6]+'</td></tr>'}).join("")}
+document.addEventListener("click",function(e){var c=e.target.closest("[data-pg]");if(c){pgF=c.dataset.pg;drawPages()}});$("#pgQ").addEventListener("input",drawPages);drawPages();
+
+/* Accounts */
+var acF="All",acS="";
+function drawAcc(){
+  var defs=[["All",function(){return true}],["Without login",function(a){return a[1]==="No login"}],["Logged in",function(a){return a[1]==="Logged in"}],["Card set up",function(a){return a[2].indexOf("verified")>-1}],["Attached to BM",function(a){return a[3]==="Attached"}],["Used in campaigns",function(a){return a[4]==="Used"}],["Not used",function(a){return a[4]==="Not used"}]];
+  var base=ACC.filter(function(a){return!acS||a[5]===acS});
+  $("#acTabs").innerHTML=defs.map(function(d){return '<button class="chip '+(d[0]===acF?"on":"")+'" data-ac="'+d[0]+'">'+d[0]+' <span class="cnt">'+base.filter(d[1]).length+'</span></button>'}).join("");
+  var cur=defs.filter(function(d){return d[0]===acF})[0][1];
+  $("#acRows").innerHTML=base.filter(cur).map(function(a){return '<tr><td class="mono">'+a[0]+'</td><td>'+pill(a[1],a[1]==="Logged in"?"ok":"mute")+'</td><td>'+pill(a[2],a[2].indexOf("verified")>-1?"ok":a[2]==="No card"?"mute":"warn")+'</td><td>'+pill(a[3],a[3]==="Attached"?"ok":"mute")+'</td><td>'+pill(a[4],a[4]==="Used"?"info":"mute")+'</td><td>'+pill(a[5])+'</td><td>18 min ago</td></tr>'}).join("")}
+document.addEventListener("click",function(e){var c=e.target.closest("[data-ac]");if(c){acF=c.dataset.ac;drawAcc()}});
+seg("#accState",function(m){acS=m;drawAcc()});drawAcc();
+
+/* Templates & history */
+$("#histRows").innerHTML=HIST.map(function(h){return '<tr><td>'+h[0]+'</td><td>'+h[1]+'</td><td>'+h[2]+'</td><td>'+pill(h[3],"ok")+'</td></tr>'}).join("");
+
+/* Chat */
+$("#fab").addEventListener("click",function(){$("#chat").classList.toggle("on")});$("#chatX").addEventListener("click",function(){$("#chat").classList.remove("on")});
+$("#chatF").addEventListener("submit",function(e){e.preventDefault();var v=$("#chatI").value.trim();if(!v)return;
+  var m=$("#msgs");m.insertAdjacentHTML("beforeend",'<div class="m u"></div>');m.lastChild.textContent=v;$("#chatI").value="";
+  setTimeout(function(){m.insertAdjacentHTML("beforeend",'<div class="m a">In your campaigns, 1 page is At risk: Noah Price (2 live campaigns). Julian Hayes is unused and has no issues, so it can replace it.</div>');m.scrollTop=m.scrollHeight},500);m.scrollTop=m.scrollHeight});
+
+
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var seq=100,nid=function(p){return p+(++seq)};
+/* ---------- Generic grid: filters on top, checkbox select, bulk drawer ---------- */
+var CUR=null;
+function Grid(id,cfg){
+  var el=$("#"+id),st={f:{},q:"",from:"",to:"",sel:{}},self=this;
+  var fh='<div class="fbar">'+'<label class="f"><span>Search</span><input type="text" data-q placeholder="Any text"></label>'+
+   cfg.filters.map(function(f){var o=f.opts||[];return '<label class="f"><span>'+f.l+'</span><select data-f="'+f.k+'"><option value="">All</option>'+o.map(function(x){return '<option>'+x+'</option>'}).join("")+'</select></label>'}).join("")+
+   (cfg.dateKey?'<label class="f"><span>From</span><input type="date" data-from></label><label class="f"><span>To</span><input type="date" data-to></label>':'')+
+   '<button class="btn" data-reset>Reset</button></div>';
+  el.innerHTML='<div class="card">'+fh+'<div class="gh"><span class="meta" data-cnt></span><div class="row">'+(cfg.bulk&&cfg.bulk.length?'<button class="btn p" data-bulk>Bulk actions ▾</button>':'')+'</div></div><div class="tw" data-tb></div></div>';
+  function vis(){var q=st.q.toLowerCase();return cfg.rows().filter(function(r){
+    for(var k in st.f){if(st.f[k]&&String(r[k])!==st.f[k])return false}
+    if(cfg.dateKey){if(st.from&&r[cfg.dateKey]<st.from)return false;if(st.to&&r[cfg.dateKey]>st.to)return false}
+    if(q){var s="";cfg.cols.forEach(function(c){if(c.t!=="pw"&&c.t!=="v")s+=" "+r[c.k]});if(s.toLowerCase().indexOf(q)<0)return false}
+    return true})}
+  this.selected=function(){var all=cfg.rows();return all.filter(function(r){return st.sel[r.id]})};
+  this.clear=function(){st.sel={};draw()};this.setSel=function(id,v){st.sel[id]=v};
+  function draw(){var rows=vis(),shown=rows.slice(0,60),nsel=self.selected().length;
+    var allOn=shown.length&&shown.every(function(r){return st.sel[r.id]});
+    var h='<table><thead><tr><th class="ck"><input type="checkbox" data-all aria-label="Select all shown" '+(allOn?"checked":"")+'></th>'+cfg.cols.map(function(c){return '<th>'+c.l+'</th>'}).join("")+(RA(cfg).length?'<th>Actions</th>':'')+'</tr></thead><tbody>';
+    h+=shown.map(function(r){return '<tr data-id="'+r.id+'"'+(cfg.rowClick?' style="cursor:pointer"':'')+'><td class="ck"><input type="checkbox" data-r="'+r.id+'" aria-label="Select row" '+(st.sel[r.id]?"checked":"")+'></td>'+cfg.cols.map(function(c){var v=r[c.k];
+      var x=c.t==="p"?pill(v):c.t==="m"?'<span class="mono">'+esc(v)+'</span>':c.t==="pw"?'<span class="mono">••••••</span>':c.t==="v"?(v==="Waiting you"?'<div class="act" style="margin:0"><button class="btn p sm" data-ap="'+r.id+'">Approved</button><button class="btn d sm" data-dis="'+r.id+'">Disapproved</button></div>':pill(v)):esc(v);
+      return '<td>'+x+'</td>'}).join("")+(RA(cfg).length?'<td><div class="ra">'+RA(cfg).filter(function(a){return !a.when||a.when(r)}).map(function(a){return '<button class="btn sm '+(a.cls||"")+'" data-ra="'+a.id+'|'+r.id+'">'+a.l+'</button>'}).join("")+'</div></td>':'')+'</tr>'}).join("")||'<tr><td colspan="'+(cfg.cols.length+2)+'" style="color:var(--mut)">No rows match these filters.</td></tr>';
+    $("[data-tb]",el).innerHTML=h+'</tbody></table>';
+    $("[data-cnt]",el).textContent=rows.length+' of '+cfg.rows().length+' rows'+(rows.length>60?' (showing first 60)':'')+' · '+nsel+' selected';
+    if(cfg.after)cfg.after()}
+  this.draw=draw;
+  el.addEventListener("input",function(e){if(e.target.hasAttribute("data-q")){st.q=e.target.value;draw()}});
+  el.addEventListener("change",function(e){var t=e.target;
+    if(t.dataset.f!==undefined){st.f[t.dataset.f]=t.value;draw()}
+    else if(t.hasAttribute("data-from")){st.from=t.value;draw()}else if(t.hasAttribute("data-to")){st.to=t.value;draw()}
+    else if(t.hasAttribute("data-all")){vis().slice(0,60).forEach(function(r){st.sel[r.id]=t.checked});draw();if(cfg.onSelect)cfg.onSelect(self.selected())}
+    else if(t.dataset.r!==undefined){st.sel[t.dataset.r]=t.checked;draw();if(cfg.onSelect)cfg.onSelect(self.selected())}});
+  el.addEventListener("click",function(e){
+    if(e.target.closest("[data-reset]")){st.f={};st.q="";st.from="";st.to="";$$("select,input[type=text],input[type=date]",el).forEach(function(i){i.value=""});draw();return}
+    if(e.target.closest("[data-bulk]")){CUR=self;openDrawer(cfg,self);return}
+    if(cfg.rowClick&&!e.target.closest("button,input,select,a,label")){var tr=e.target.closest("tr[data-id]");if(tr){var rr=cfg.rows().filter(function(x){return x.id===tr.dataset.id})[0];if(rr){st.sel[rr.id]=!st.sel[rr.id];draw();if(cfg.onSelect)cfg.onSelect(self.selected())}return}}
+    var ra=e.target.closest("[data-ra]");if(ra){var pr=ra.dataset.ra.split("|"),act=RA(cfg).filter(function(x){return x.id===pr[0]})[0],row=cfg.rows().filter(function(x){return x.id===pr[1]})[0];if(act&&row){if(act.id==="edit")openEdit(cfg,row);else{var m=act.fn(row);refreshAll();if(m)toast(m)}}return}
+    var a=e.target.closest("[data-ap]");if(a&&cfg.onVerify){cfg.onVerify(a.dataset.ap,true);return}
+    var d=e.target.closest("[data-dis]");if(d&&cfg.onVerify){cfg.onVerify(d.dataset.dis,false)}});
+  draw();
+}
+function RA(cfg){var a=[];if(cfg.edit)a.push({id:"edit",l:"Edit"});(cfg.rowActions||[]).forEach(function(x){a.push(x)});if(cfg.del)a.push({id:"del",l:"Delete",cls:"d",fn:function(r){var i=cfg.rows().indexOf(r);if(i>-1)cfg.rows().splice(i,1);if(cfg.onDel)cfg.onDel(r);return "Deleted"}});return a}
+function openEdit(cfg,row){$("#drT").textContent="Edit row";
+  $("#drB").innerHTML=cfg.edit.map(function(f){var v=f.k==="pw"?"":row[f.k];return '<label class="f"><span>'+f.l+'</span>'+(f.opts?'<select data-ef="'+f.k+'">'+f.opts.map(function(o){return '<option'+(o===v?" selected":"")+'>'+o+'</option>'}).join("")+'</select>':'<input type="text" data-ef="'+f.k+'" value="'+esc(v)+'"'+(f.k==="pw"?' placeholder="leave blank to keep"':'')+'>')+'</label>'}).join("")+'<button class="btn p" id="edSave">Save</button>';
+  $("#edSave").addEventListener("click",function(){$$("[data-ef]",$("#drB")).forEach(function(i){if(i.dataset.ef==="pw"){if(i.value)row.pw="x";return}row[i.dataset.ef]=i.value});closeDrawer();refreshAll();toast("Saved")});
+  $("#dr").classList.add("on");$("#scrim").classList.add("on")}
+function openDrawer(cfg,g){var n=g.selected().length;$("#drT").textContent="Bulk actions · "+n+" row"+(n===1?"":"s")+" selected";
+  var h='';
+  if(!n)h+='<div class="note">No rows selected. Tick rows in the table first, or tick the top box to select all shown rows.</div>';
+  h+='<label class="f"><span>Action</span><select id="drAct">'+cfg.bulk.map(function(b,i){return '<option value="'+i+'">'+b.label+'</option>'}).join("")+'</select></label><div id="drF"></div><button class="btn p" id="drApply">Apply to selected</button>';
+  $("#drB").innerHTML=h;
+  function fields(){var b=cfg.bulk[$("#drAct").value];$("#drF").innerHTML=(b.fields||[]).map(function(f){return '<label class="f"><span>'+f.l+'</span>'+(f.opts?'<select data-bf="'+f.k+'">'+f.opts.map(function(o){return '<option>'+o+'</option>'}).join("")+'</select>':'<input type="text" data-bf="'+f.k+'">')+'</label>'}).join("")}
+  $("#drAct").addEventListener("change",fields);fields();
+  $("#drApply").addEventListener("click",function(){var rows=g.selected();if(!rows.length){toast("Select rows first");return}var b=cfg.bulk[$("#drAct").value],vals={};$$("[data-bf]",$("#drB")).forEach(function(i){vals[i.dataset.bf]=i.value});
+    var msg=b.fn(rows,vals);g.clear();closeDrawer();refreshAll();toast(msg||("Applied to "+rows.length+" rows"))});
+  $("#dr").classList.add("on");$("#scrim").classList.add("on")}
+function closeDrawer(){$("#dr").classList.remove("on");$("#scrim").classList.remove("on")}
+$("#drX").addEventListener("click",closeDrawer);$("#scrim").addEventListener("click",closeDrawer);
+
+/* ---------- Review queue: tick to open, check, submit ---------- */
+/* ===== AI check (shared by all consoles) ===== */
+var AIV={},AIAUTO={},AIFORCE={},AIFN=function(){return[]},AISUBMIT=function(){},AIBY="My agent";
+function aiE(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function aiTone(s){return s==="Passed"||s==="All passed"?"ok":s==="Issues found"?"risk":s==="Issues sent"||s==="Partly checked"?"warn":"mute"}
+function aiPill(s,pre){return '<span class="pill '+aiTone(s)+'">'+(pre===false?"":"AI: ")+s+'</span>'}
+function aiNowT(){var d=new Date();return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)}
+function aiRun(id,by){var items=AIFN(id),bad=items.filter(function(i){return i.s==="bad"}).length;
+  AIV[id]={state:bad?"Issues found":"Passed",by:by||AIBY,at:aiNowT(),items:items};return AIV[id]}
+function aiIc(s){return '<span class="aiic '+s+'">'+(s==="ok"?"✓":s==="bad"?"×":"!")+'</span>'}
+function aiBox(id,title){var v=AIV[id],auto=AIAUTO[id]!==false,bad=v?v.items.filter(function(i){return i.s==="bad"}).length:0;
+  var h='<div class="aib" id="ai-'+id+'"><div class="aih"><b>'+(title||"AI check")+'</b> '+(v?aiPill(v.state)+' <span class="meta" style="color:var(--mut)">'+aiE(v.by)+' · '+v.at+'</span>':aiPill("Not run"))+'<span style="flex:1"></span><label class="aiau"><input type="checkbox" data-aiauto="'+id+'"'+(auto?' checked':'')+'> Let AI check before I submit</label><button class="btn sm" data-aic="'+id+'">'+(v?"Run again":"Run AI check now")+'</button></div>';
+  if(v&&v.items.length)h+='<div class="ail">'+v.items.map(function(i){return '<div class="aii">'+aiIc(i.s)+'<div style="flex:1">'+aiE(i.t)+'</div>'+(i.go?'<button class="btn sm" data-go="'+i.go+'">'+aiE(i.fix||"Open")+'</button>':'')+(i.gotx?'<button class="btn sm" data-gotx="'+i.gotx+'">'+aiE(i.fix||"Open")+'</button>':'')+'</div>'}).join("")+'</div>';
+  else h+='<div class="aihint">'+(auto?"AI will check everything when you press Submit. Press Run to see the result first.":"AI check is off. The next team will see “Not run”.")+'</div>';
+  if(bad)h+='<div class="aiwarn"><span>'+bad+' problem'+(bad>1?"s":"")+' found. Fix them and run again, or send as it is. The next team will see “Issues sent”.</span><button class="btn sm d" data-aiforce="'+id+'">Submit anyway</button></div>';
+  return h+'</div>'}
+function aiRefresh(id){Array.prototype.slice.call(document.querySelectorAll('[id="ai-'+id+'"]')).forEach(function(e){var t=document.createElement("div");t.innerHTML=aiBox(id);e.parentNode.replaceChild(t.firstChild,e)})}
+/* gate: true = go ahead and submit. Records what the next team will see. */
+function aiGate(id){if(AIAUTO[id]===false){AIV[id]={state:"Not run",by:"Skipped by "+AIBY,at:aiNowT(),items:[]};return true}
+  var v=aiRun(id);if(v.state==="Passed")return true;
+  if(AIFORCE[id]){v.state="Issues sent";return true}
+  aiRefresh(id);var n=v.items.filter(function(i){return i.s==="bad"}).length;toast("AI found "+n+" problem"+(n>1?"s":"")+". Fix them, or press Submit anyway");return false}
+/* the receiving team: what earlier agents already checked */
+function aiSummary(arr){if(!arr||!arr.length)return "Not run";var s=arr.map(function(a){return a.state});return s.indexOf("Issues found")>-1||s.indexOf("Issues sent")>-1?"Issues found":s.every(function(x){return x==="Passed"})?"All passed":"Partly checked"}
+function aiChain(arr,title){if(!arr||!arr.length)return '<div class="aib"><div class="aih"><b>'+(title||"Checked before it reached you")+'</b> '+aiPill("Not run",false)+'</div><div class="aihint">No earlier team ran an AI check. Check everything yourself, or run the AI check below.</div></div>';
+  var tot=arr.reduce(function(a,b){return a+b.total},0),okc=arr.reduce(function(a,b){return a+b.ok},0);
+  return '<div class="aib"><div class="aih"><b>'+(title||"Checked before it reached you")+'</b> '+aiPill(aiSummary(arr),false)+'<span class="meta" style="color:var(--mut)">'+okc+' of '+tot+' checks passed earlier. You can skip those and look at the rest.</span></div><div class="ail">'+arr.map(function(a){return '<div class="aii">'+aiIc(a.state==="Passed"?"ok":a.state==="Not run"?"warn":"bad")+'<div style="flex:1"><b>'+aiE(a.role)+'</b> · '+aiE(a.by)+' · '+aiE(a.at)+'<div class="meta" style="color:var(--mut)">'+(a.total?a.ok+' of '+a.total+' checks passed':'No checks were run')+(a.note?' · '+aiE(a.note):'')+'</div></div>'+aiPill(a.state,false)+'</div>'}).join("")+'</div></div>'}
+document.addEventListener("click",function(e){var c;
+  if(c=e.target.closest("[data-aic]")){var id=c.dataset.aic,v=aiRun(id);aiRefresh(id);var n=v.items.filter(function(i){return i.s==="bad"}).length;toast(n?"AI found "+n+" problem"+(n>1?"s":""):"AI check passed");return}
+  if(c=e.target.closest("[data-aiforce]")){AIFORCE[c.dataset.aiforce]=true;AISUBMIT(c.dataset.aiforce);return}});
+document.addEventListener("change",function(e){var c=e.target.closest("[data-aiauto]");if(c){AIAUTO[c.dataset.aiauto]=c.checked;aiRefresh(c.dataset.aiauto)}});
+
+AIBY="Rohan's agent";
+function aiState(id){return AIV[id]?AIV[id].state:"Not run"}
+var AICH={v1:[{role:"Supplier",state:"Passed",by:"Sameer's agent",at:"11:48",ok:6,total:6},{role:"Designer",state:"Passed",by:"Anika's agent",at:"11:52",ok:6,total:6}],
+ v2:[{role:"Supplier",state:"Passed",by:"Sameer's agent",at:"10:20",ok:6,total:6},{role:"Designer",state:"Issues sent",by:"Anika's agent",at:"10:41",ok:5,total:6,note:"1 headline close to limit, sent anyway"}],
+ v3:[{role:"Supplier",state:"Not run",by:"Imran skipped it",at:"09:55",ok:0,total:0},{role:"Designer",state:"Passed",by:"Dev's agent",at:"10:10",ok:6,total:6}],
+ v4:[{role:"Supplier",state:"Passed",by:"Sameer's agent",at:"Yesterday",ok:6,total:6},{role:"Designer",state:"Passed",by:"Anika's agent",at:"Yesterday",ok:6,total:6}]};
+var EARLY={0:"Supplier",1:"Supplier",2:"Supplier",3:"Supplier",5:"Designer"};
+function earlyOK(r,i){var who=EARLY[i];if(!who)return "";var a=(r.aiCh||[]).filter(function(x){return x.role===who})[0];return a&&a.state==="Passed"?" · already verified by "+who+"'s agent":""}
+AIFN=function(id){var r=REVIEW.filter(function(x){return x.id===id})[0];
+  return r.checks.map(function(c,i){var e=earlyOK(r,i);return {s:c.s==="ok"?"ok":c.s==="bad"?"bad":"warn",t:c.t+(c.s==="ok"?e:"")}})};
+function aiQuiet(id){if(AIAUTO[id]===false){AIV[id]={state:"Not run",by:"Skipped by "+AIBY,at:aiNowT(),items:[]};return true}return aiRun(id).state==="Passed"}
+function submitRv(id){var r=REVIEW.filter(function(x){return x.id===id})[0];if(!aiGate(id))return false;r.aiBuy=aiState(id);r.stage="Submitted";closeRv(id,true);syncPre();refreshAll();toast(r.task+" submitted to master · your AI check: "+r.aiBuy);return true}
+AISUBMIT=function(id){submitRv(id)};
+
+var BASE=["Ad account is Active and logged in","Card verified","Account attached to BM and XMP","Page is in BM and status is No issues","Promoted app found for this account","Videos and covers present in library","Cover repeat limit respected","No campaign with this name and date exists","Budget, bid and CPR goal complete","Page is not used in a live campaign"];
+function mk(over){return BASE.map(function(t,i){var o=over&&over[i];return {t:o&&o.t||t,s:o?o.s:"ok"}})}
+var REVIEW=[
+ {id:"v1",task:"T-1042",prod:"VDHP 159",geo:"AE, NL",camps:"1 × 30",sup:"Done",des:"Done",stage:"In review",upd:"12:20",acct:"1451616750162943 · Wankhade Patil Randhir",page:"Noah Price · 1368876882978150",videos:"TEW 031–060 · 30 videos",covers:"Random, max repeat 1",text:"Story set A · 2,790 chars · 4 languages",head:"एक संगीत विद्यालय में गई। · Install now",names:"VD 159 AE,SA,NL || AE+NL || 20/10 || Noah Price",checks:mk({9:{t:"Page used in 1 live campaign already: confirm reuse",s:"wait"}})},
+ {id:"v2",task:"T-1041",prod:"VDHP 152",geo:"BR",camps:"2 × 60",sup:"Done",des:"Done",stage:"In review",upd:"11:05",acct:"1468036252139450 · Mullen",page:"Julian Hayes · 10006631842",videos:"TEW 061–120 · 60 videos",covers:"Match video name",text:"Story set B · 2,410 chars · 2 languages",head:"Ela entrou na escola de música · Install now",names:"VD 152 BR || BR || 20/10 || Julian Hayes",checks:mk()},
+ {id:"v3",task:"T-1048",prod:"VDHP 144",geo:"BR",camps:"1 × 30",sup:"Done",des:"Done",stage:"In review",upd:"10:40",acct:"1673515281151662 · Isa Roper",page:"Isa Roper · 1448025530577540",videos:"TEW 121–150 · 30 videos",covers:"Random, max repeat 1",text:"Story set A · 2,790 chars",head:"Ela entrou · Install now",names:"VD 144 BACK || BR || 20/10 || Isa Roper",checks:mk({6:{t:"Cover repeat limit exceeded: 3 covers already used twice",s:"bad"}})},
+ {id:"v4",task:"T-1047",prod:"VDHP 122",geo:"AE, NL",camps:"1 × 30",sup:"Done",des:"Done",stage:"Submitted",upd:"Yesterday",acct:"1570337628451061 · Julian Young",page:"Julian Young · 1323659637503856",videos:"TEW 001–030 · 30 videos",covers:"Random, max repeat 1",text:"Story set A",head:"एक संगीत विद्यालय · Install now",names:"VD 122 AE,NL || AE+NL || 19/10 || Julian Young",checks:mk()}];
+var OPENRV=[],RVNOTE={};
+function pre(r){var bad=r.checks.filter(function(c){return c.s==="bad"}).length,w=r.checks.filter(function(c){return c.s==="wait"}).length;return bad?"Failed":w?"To confirm":"Passed"}
+function syncPre(){REVIEW.forEach(function(r){r.pre=pre(r)});$("#nRev").textContent=REVIEW.filter(function(r){return r.stage==="In review"}).length}
+syncPre();
+REVIEW.forEach(function(r){r.aiCh=AICH[r.id];r.aiS=aiSummary(r.aiCh)});
+var gRev=new Grid("g-rev",{rows:function(){return REVIEW},rowClick:true,onSelect:function(rows){syncRv(rows)},
+ filters:[{k:"stage",l:"Stage",opts:["In review","Submitted","Sent back"]},{k:"pre",l:"Pre-flight",opts:["Passed","To confirm","Failed"]},{k:"aiS",l:"Earlier AI check",opts:["All passed","Partly checked","Issues found","Not run"]},{k:"prod",l:"Product",opts:["VDHP 159","VDHP 152","VDHP 144","VDHP 122"]},{k:"geo",l:"Geo",opts:["AE, NL","BR"]}],
+ cols:[{k:"task",l:"Task",t:"m"},{k:"prod",l:"Product"},{k:"geo",l:"Geo"},{k:"camps",l:"Campaigns × ads",t:"m"},{k:"sup",l:"Supplier",t:"p"},{k:"des",l:"Designer",t:"p"},{k:"aiS",l:"Earlier AI check",t:"p"},{k:"pre",l:"Pre-flight",t:"p"},{k:"stage",l:"Stage",t:"p"},{k:"upd",l:"Updated"}],
+ rowActions:[{id:"open",l:"Open",cls:"p",when:function(r){return r.stage==="In review"&&OPENRV.indexOf(r.id)<0},fn:function(r){gRev.setSel(r.id,true);openRv([r.id]);return "Opened "+r.task+" below"}},{id:"close",l:"Close",when:function(r){return OPENRV.indexOf(r.id)>-1},fn:function(r){closeRv(r.id);return "Closed "+r.task}}],
+ bulk:[{label:"Run AI check on selected",fn:function(rows){var n=0,b=0;rows.forEach(function(r){if(r.stage==="In review"){var v=aiRun(r.id);n++;if(v.state!=="Passed")b++}});return "AI checked "+n+" task"+(n>1?"s":"")+", "+b+" with problems. Open them to see the list"}},{label:"Open selected below",fn:function(rows){var ids=rows.filter(function(r){return r.stage==="In review"}).map(function(r){return r.id});ids.forEach(function(id){gRev.setSel(id,true)});openRv(ids);return "Opened "+ids.length+" tasks below"}},
+  {label:"Submit selected to master (only Passed + AI check)",fn:function(rows){var n=0;rows.forEach(function(r){if(r.stage==="In review"&&r.pre==="Passed"&&aiQuiet(r.id)){r.aiBuy=aiState(r.id);r.stage="Submitted";n++;gRev.setSel(r.id,false);closeRv(r.id,true)}});return n+" submitted to master, "+(rows.length-n)+" skipped"}},
+  {label:"Send back to supplier",fields:[{k:"note",l:"Reason"}],fn:function(rows,v){return sendBack(rows,"supplier",v.note)}},
+  {label:"Send back to designer",fields:[{k:"note",l:"Reason"}],fn:function(rows,v){return sendBack(rows,"designer",v.note)}}]});
+function sendBack(rows,who,note){var n=0;rows.forEach(function(r){if(r.stage==="In review"){r.stage="Sent back";if(who==="supplier")r.sup="Waiting";else r.des="Waiting";gRev.setSel(r.id,false);closeRv(r.id,true);n++}});return n+" sent back to "+who+(note?": "+note:"")}
+function syncRv(rows){var ids=rows.filter(function(r){return r.stage==="In review"}).map(function(r){return r.id});OPENRV=OPENRV.filter(function(id){return ids.indexOf(id)>-1});ids.forEach(function(id){if(OPENRV.indexOf(id)<0)OPENRV.push(id)});drawRv()}
+function closeRv(id,quiet){var i=OPENRV.indexOf(id);if(i>-1)OPENRV.splice(i,1);gRev.setSel(id,false);if(!quiet)refreshAll()}
+function openRv(ids){ids.forEach(function(id){if(OPENRV.indexOf(id)<0)OPENRV.push(id)});drawRv();if(ids.length&&$("#rvPanels").firstChild)$("#rvPanels").scrollIntoView({behavior:"smooth"})}
+function drawRv(){$("#rvCnt").innerHTML='Open tasks: <b>'+OPENRV.length+'</b>';
+  $("#rvChips").innerHTML=OPENRV.map(function(id){var r=REVIEW.filter(function(x){return x.id===id})[0];return '<button class="chip" data-rvj="'+id+'">'+r.task+'</button>'}).join("");
+  $("#rvPanels").innerHTML=OPENRV.map(function(id){var r=REVIEW.filter(function(x){return x.id===id})[0],p=pre(r);
+    var h='<div class="card" id="rp-'+id+'"><h3><span class="mono">'+r.task+'</span><span class="row" style="gap:14px;font-weight:400;flex-wrap:wrap"><span><span style="color:var(--mut)">Product / geo</span> '+r.prod+' · '+r.geo+'</span><span><span style="color:var(--mut)">Campaigns × ads</span> '+r.camps+'</span><span><span style="color:var(--mut)">Updated</span> '+r.upd+'</span>'+pill(p)+pill(r.stage)+'</span></h3><div class="b two">';
+    h+='<div class="b" style="padding-bottom:0">'+aiChain(r.aiCh)+'</div>';
+    h+='<dl class="kv"><dt>Ad account</dt><dd class="mono">'+r.acct+'</dd><dt>Page</dt><dd>'+r.page+'</dd><dt>Videos</dt><dd>'+r.videos+'</dd><dt>Covers</dt><dd>'+r.covers+'</dd><dt>Primary text</dt><dd>'+r.text+'</dd><dt>Headline / CTA</dt><dd>'+r.head+'</dd><dt>Names</dt><dd class="mono">'+r.names+'</dd></dl>';
+    h+='<div>'+r.checks.map(function(c,i){return '<div class="check"><span class="ic '+c.s+'">'+(c.s==="ok"?"✓":c.s==="bad"?"×":"!")+'</span><div style="flex:1">'+c.t+(c.s==="ok"?'<span class="meta" style="color:var(--ok)">'+earlyOK(r,i)+'</span>':'')+'</div>'+(c.s==="wait"?'<button class="btn sm" data-cf="'+id+'|'+i+'">Confirm</button>':'')+'</div>'}).join("")+'</div></div>';
+    h+='<div class="b" style="border-top:1px solid var(--line)">'+aiBox(id,"Your AI check before master")+'<label class="f"><span>Note (used when sending back)</span><input type="text" data-rvn="'+id+'" value="'+esc(RVNOTE[id]||"")+'" placeholder="Example: replace the 3 repeated covers"></label>';
+    h+='<div class="act"><button class="btn p" data-rvs="'+id+'" '+(p==="Passed"?"":"disabled")+'>Submit to master</button><button class="btn" data-rvb="'+id+'|supplier">Send back to supplier</button><button class="btn" data-rvb="'+id+'|designer">Send back to designer</button><button class="btn" data-rvc="'+id+'">Close</button></div>'+(p==="Passed"?"":'<div class="meta" style="color:var(--mut);margin-top:6px">'+(p==="Failed"?"A check failed. Send it back to fix it.":"Confirm the open check to enable Submit.")+'</div>')+'</div></div>';
+    return h}).join("")||'<div class="note">No task is open. Click a row or tick the box to open it here.</div>'}
+document.addEventListener("input",function(e){var n=e.target.closest("[data-rvn]");if(n)RVNOTE[n.dataset.rvn]=n.value});
+document.addEventListener("click",function(e){var c;
+  if(c=e.target.closest("[data-rvj]")){var p=$("#rp-"+c.dataset.rvj);if(p)p.scrollIntoView({behavior:"smooth"});return}
+  if(c=e.target.closest("[data-cf]")){var k=c.dataset.cf.split("|"),r=REVIEW.filter(function(x){return x.id===k[0]})[0];r.checks[+k[1]].s="ok";syncPre();refreshAll();toast("Confirmed");return}
+  if(c=e.target.closest("[data-rvs]")){submitRv(c.dataset.rvs);return}
+  if(c=e.target.closest("[data-rvb]")){var k2=c.dataset.rvb.split("|"),r3=REVIEW.filter(function(x){return x.id===k2[0]})[0];toast(r3.task+": "+sendBack([r3],k2[1],RVNOTE[r3.id]));syncPre();refreshAll();return}
+  if(c=e.target.closest("[data-rvc]")){closeRv(c.dataset.rvc);return}});
+$("#rvAiAll").addEventListener("click",function(){var b=0;OPENRV.forEach(function(id){var v=aiRun(id);aiRefresh(id);if(v.state!=="Passed")b++});toast(OPENRV.length?("AI checked "+OPENRV.length+" task"+(OPENRV.length>1?"s":"")+", "+b+" with problems"):"No task is open")});
+$("#rvCloseAll").addEventListener("click",function(){OPENRV.slice().forEach(function(id){closeRv(id,true)});refreshAll()});
+$("#rvSubAll").addEventListener("click",function(){var n=0,sk=0;OPENRV.slice().forEach(function(id){var r=REVIEW.filter(function(x){return x.id===id})[0];if(pre(r)==="Passed"&&aiQuiet(id)){r.aiBuy=aiState(id);r.stage="Submitted";closeRv(id,true);n++}else sk++});syncPre();refreshAll();toast(n+" submitted to master"+(sk?", "+sk+" skipped (not passed)":""))});
+
+/* ---------- Templates: list, copy, edit, rejection rule ---------- */
+var RULES=[{n:"Solve once",d:"Run once, replace, pause. No repeat.",f:"Run once",a:"Fix automatically"},{n:"Auto every 30 min",d:"Check every 30 min and fix without asking.",f:"Every 30 minutes",a:"Fix automatically"},{n:"Hourly with approval",d:"Check every hour, show count, fix after I approve.",f:"Every 1 hour",a:"Show me the count first, I approve"}];
+var GEOS=["AE","NL","SA","BR","IN","US","GB","ID"];
+function T(o){var d={id:"",name:"",product:"",geos:["AE","NL"],adsets:2,adsPer:15,budget:"400",bid:"Cost cap",cpr:"0.40",cover:"Random from folder",coverMax:1,coverFolder:"NEW TEW1 / covers",cta:"Install now",eu:"Yes",pattern:"[Product] || [Geo] || [Date] || [Page]",publish:"As soon as master approves",startAds:"Yes",tabs:3,rule:{mode:"none",saved:"Hourly with approval",start:"When campaign publishes",pause:true,replace:true,startAfter:false,freq:"Every 1 hour",appr:"Show me the count first, I approve",att:3,vf:"Compliant videos / Oct",imf:"Compliant images / Oct"}};for(var k in o){if(k==="rule")for(var j in o.rule)d.rule[j]=o.rule[j];else d[k]=o[k]}return d}
+var TEMPLATES=[
+ T({id:"t1",name:"VDHP 159 · AE+NL",product:"VDHP 159",geos:["AE","NL"],adsets:2,adsPer:15,budget:"400",cpr:"0.40",pattern:"[Product] AE,SA,NL || [Geo] || [Date] || [Page]",rule:{mode:"saved",saved:"Hourly with approval"}}),
+ T({id:"t2",name:"VDHP 152 · BR",product:"VDHP 152",geos:["BR"],adsets:2,adsPer:30,budget:"300",cpr:"0.35",cover:"Match video name",rule:{mode:"custom",freq:"Every 30 minutes",appr:"Fix automatically",att:2,startAfter:true}}),
+ T({id:"t3",name:"VDHP 144 · BR",product:"VDHP 144",geos:["BR"],adsets:1,adsPer:30,budget:"250",cpr:"0.30"})];
+function ruleText(r){return r.mode==="none"?"No rejection rule":r.mode==="saved"?"Rule: "+r.saved:"Custom rule: "+r.freq}
+function geoStr(t){return t.geos.join(", ")}
+function fillTplSelect(){$("#ntTpl").innerHTML=TEMPLATES.map(function(t){return '<option value="'+t.id+'">'+esc(t.name)+' · '+t.adsets+' ad sets</option>'}).join("")+'<option value="">Start from blank</option>'}
+var tplDel=null;
+function drawTpl(){fillTplSelect();$("#tplGrid").innerHTML=TEMPLATES.map(function(t){return '<div class="card" data-te="'+t.id+'" style="cursor:pointer"><h3>'+esc(t.name)+' '+pill(t.rule.mode==="none"?"No rule":"Rule on",t.rule.mode==="none"?"mute":"info")+'</h3><div class="b"><p style="margin:0 0 4px">'+t.adsets+' ad sets · '+t.adsPer+' ads each · $'+esc(t.budget)+' · CPR $'+esc(t.cpr)+'</p><p style="margin:0 0 4px;color:var(--mut)">'+t.cover+' · '+t.cta+' · '+geoStr(t)+'</p><p style="margin:0 0 12px;color:var(--mut)">'+ruleText(t.rule)+'</p><div class="act"><button class="btn p sm" data-tuse="'+t.id+'">Use for new task</button><button class="btn sm" data-te="'+t.id+'">Edit</button><button class="btn sm" data-tcopy="'+t.id+'">Copy</button><button class="btn sm d" data-tdel="'+t.id+'">'+(tplDel===t.id?"Confirm delete?":"Delete")+'</button></div></div></div>'}).join("")||'<div class="note">No templates yet. Use + New template.</div>'}
+var ED=null,EDID=null;
+function gp(o,k){return k.split(".").reduce(function(a,x){return a[x]},o)}
+function sp(o,k,v){var p=k.split("."),l=p.pop();p.reduce(function(a,x){return a[x]},o)[l]=v}
+function openEditor(t,isNew){EDID=isNew?null:t.id;ED=JSON.parse(JSON.stringify(t));$("#teTitle").textContent=isNew?"New template":"Edit template";$("#teDel").style.display=isNew?"none":"";$("#teDel").textContent="Delete";tplDel=null;buildEditor();show("tpledit")}
+function fld(l,k,type,o){o=o||{};var v=gp(ED,k);if(type==="sel")return '<label class="f"><span>'+l+'</span><select data-tf="'+k+'">'+o.opts.map(function(x){return '<option'+(String(x)===String(v)?" selected":"")+'>'+x+'</option>'}).join("")+'</select></label>';
+  return '<label class="f"><span>'+l+'</span><input type="'+(type||"text")+'" data-tf="'+k+'" value="'+esc(v)+'"'+(o.ph?' placeholder="'+o.ph+'"':'')+'></label>'}
+function segf(k,opts){var v=gp(ED,k);return '<div class="seg" data-ts="'+k+'">'+opts.map(function(o){return '<button data-v="'+o[0]+'" class="'+(v===o[0]?"on":"")+'">'+o[1]+'</button>'}).join("")+'</div>'}
+function buildEditor(){
+  $("#teLeft").innerHTML=
+  '<div class="card"><h3>1. Basics</h3><div class="b grid g2">'+fld("Template name","name","text",{ph:"Example: VDHP 159 · AE+NL"})+fld("Product","product","text",{ph:"Example: VDHP 159"})+'<div style="grid-column:span 2"><span class="meta" style="color:var(--mut)">Geos (click to turn on or off)</span><div class="tabs" id="teGeos" style="margin-top:6px"></div></div></div></div>'+
+  '<div class="card"><h3>2. Campaign</h3><div class="b grid g3">'+fld("Ad sets per campaign","adsets","number")+fld("Ads per ad set","adsPer","number")+fld("Daily budget ($)","budget")+fld("Bid strategy","bid","sel",{opts:["Cost cap","Lowest cost","Bid cap"]})+fld("CPR goal ($)","cpr")+'</div></div>'+
+  '<div class="card"><h3>3. Creative</h3><div class="b grid g2"><div style="grid-column:span 2"><span class="meta" style="color:var(--mut)">Cover images</span><div style="margin-top:6px">'+segf("cover",[["Random from folder","Random from folder"],["Match video name","Match video name"]])+'</div></div>'+fld("Cover folder","coverFolder")+'<div id="teMax">'+fld("Max repeats per cover","coverMax","number")+'</div>'+fld("Call to action","cta","sel",{opts:["Install now","Download","Play game","Learn more"]})+fld("EU beneficiary","eu","sel",{opts:["Yes","No"]})+'</div></div>'+
+  '<div class="card"><h3>4. Names</h3><div class="b grid">'+fld("Naming pattern","pattern")+'<div><span class="meta" style="color:var(--mut)">Click to insert</span><div class="tabs" style="margin-top:6px">'+["Product","Geo","Date","Page","Account"].map(function(x){return '<button class="chip" data-tok="['+x+']">+ '+x+'</button>'}).join("")+'</div></div><div class="note" id="tePrev"></div></div></div>'+
+  '<div class="card"><h3>5. Publish</h3><div class="b grid g3">'+fld("When to publish","publish","sel",{opts:["As soon as master approves","Schedule for a time"]})+fld("Start ads after publish","startAds","sel",{opts:["Yes","No"]})+fld("Default parallel tabs","tabs","sel",{opts:[1,2,3,4,5]})+'</div></div>'+
+  '<div class="card"><h3>6. Rejection rule <span id="teRuleTag"></span></h3><div class="b grid"><div>'+segf("rule.mode",[["none","No rejection rule"],["saved","Use a saved rule"],["custom","Custom rule"]])+'</div><div id="teRule"></div></div></div>';
+  drawGeos();drawRuleBlock();drawSum()}
+function drawGeos(){$("#teGeos").innerHTML=GEOS.map(function(g){return '<button class="chip '+(ED.geos.indexOf(g)>-1?"on":"")+'" data-geo="'+g+'">'+g+'</button>'}).join("")}
+function drawRuleBlock(){var r=ED.rule,h="";$("#teRuleTag").innerHTML=pill(r.mode==="none"?"Off":"On",r.mode==="none"?"mute":"info");
+  if(r.mode==="none")h='<div class="note">No rule is attached. Campaigns from this template run without any rejection check. You can still start a rule later from Rejection rules.</div>';
+  else{if(r.mode==="saved")h='<label class="f"><span>Saved rule</span><select data-tf="rule.saved">'+RULES.map(function(x){return '<option'+(x.n===r.saved?" selected":"")+'>'+x.n+'</option>'}).join("")+'</select></label><div class="note" style="margin-top:8px" id="teRd"></div>';
+    else h='<div class="grid g2"><label class="row" style="gap:8px"><input type="checkbox" data-tc="rule.pause" '+(r.pause?"checked":"")+'> Pause the ads</label><label class="row" style="gap:8px"><input type="checkbox" data-tc="rule.replace" '+(r.replace?"checked":"")+'> Replace materials</label><label class="row" style="gap:8px"><input type="checkbox" data-tc="rule.startAfter" '+(r.startAfter?"checked":"")+'> Start ads after replacing</label>'+fld("Max replace attempts per ad","rule.att","sel",{opts:[1,2,3,5,"Unlimited"]})+fld("Frequency","rule.freq","sel",{opts:["Run once","Every 30 minutes","Every 1 hour"]})+'<div><span class="meta" style="color:var(--mut)">Approval</span><div style="margin-top:6px">'+segf("rule.appr",[["Fix automatically","Fix automatically"],["Show me the count first, I approve","I approve first"]])+'</div></div>'+fld("Video material folder","rule.vf","sel",{opts:["Compliant videos / Oct","dummy 1"]})+fld("Image material folder","rule.imf","sel",{opts:["Compliant images / Oct","dummy 1"]})+'</div>';
+    h+='<div class="grid g2" style="margin-top:12px">'+fld("Start the rule","rule.start","sel",{opts:["When campaign publishes","Manually later"]})+'</div>'}
+  $("#teRule").innerHTML=h;if(r.mode==="saved"){var x=RULES.filter(function(q){return q.n===r.saved})[0];$("#teRd").textContent=x.d+" Frequency: "+x.f+". Approval: "+x.a+"."}}
+function drawSum(){var t=ED,pv=t.pattern.replace("[Product]",t.product||"Product").replace("[Geo]",t.geos.join("+")||"Geo").replace("[Date]","20/10").replace("[Account]","1451…2943").replace("[Page]","Noah Price");
+  $("#tePrev").textContent="Preview: "+pv;$("#teMax").style.display=t.cover==="Random from folder"?"":"none";
+  $("#teSum").innerHTML='<dl class="kv"><dt>Name</dt><dd>'+esc(t.name||"(no name yet)")+'</dd><dt>Product / geos</dt><dd>'+esc(t.product||"–")+' · '+(geoStr(t)||"–")+'</dd><dt>Structure</dt><dd>'+t.adsets+' ad sets × '+t.adsPer+' ads = '+(t.adsets*t.adsPer)+' ads</dd><dt>Budget / bid</dt><dd>$'+esc(t.budget)+' · '+t.bid+' · CPR $'+esc(t.cpr)+'</dd><dt>Covers</dt><dd>'+t.cover+(t.cover==="Random from folder"?' (max '+t.coverMax+')':'')+'</dd><dt>Publish</dt><dd>'+t.publish+'</dd><dt>Rejection rule</dt><dd>'+pill(ruleText(t.rule),t.rule.mode==="none"?"mute":"info")+'</dd></dl>'}
+document.addEventListener("input",function(e){var f=e.target.closest("[data-tf]");if(!f||!ED)return;var v=f.value;if(f.type==="number")v=+v;sp(ED,f.dataset.tf,v);drawSum()});
+document.addEventListener("change",function(e){var f=e.target.closest("select[data-tf]");if(f&&ED){var v=f.value;if(/^\d+$/.test(v))v=+v;sp(ED,f.dataset.tf,v);if(f.dataset.tf==="rule.saved")drawRuleBlock();drawSum()}var c=e.target.closest("[data-tc]");if(c&&ED){sp(ED,c.dataset.tc,c.checked);drawSum()}});
+document.addEventListener("click",function(e){var c;
+  if(c=e.target.closest("[data-ts]")){var b=e.target.closest("button");if(!b||!ED)return;sp(ED,c.dataset.ts,b.dataset.v);$$("button",c).forEach(function(x){x.classList.toggle("on",x===b)});if(c.dataset.ts==="rule.mode")drawRuleBlock();drawSum();return}
+  if(c=e.target.closest("[data-geo]")){var g=c.dataset.geo,i=ED.geos.indexOf(g);if(i>-1)ED.geos.splice(i,1);else ED.geos.push(g);drawGeos();drawSum();return}
+  if(c=e.target.closest("[data-tok]")){ED.pattern=(ED.pattern+" "+c.dataset.tok).trim();$("[data-tf=pattern]").value=ED.pattern;drawSum();return}
+  if(c=e.target.closest("[data-tuse]")){$("#ntTpl").value=c.dataset.tuse;show("new");toast("Template loaded in New task");return}
+  if(c=e.target.closest("[data-tcopy]")){var t=TEMPLATES.filter(function(x){return x.id===c.dataset.tcopy})[0],cp=JSON.parse(JSON.stringify(t));cp.id=nid("t");cp.name=t.name+" (copy)";TEMPLATES.push(cp);drawTpl();openEditor(cp,false);toast("Copied. Rename it and save");return}
+  if(c=e.target.closest("[data-tdel]")){var id=c.dataset.tdel;if(tplDel===id){TEMPLATES.splice(TEMPLATES.indexOf(TEMPLATES.filter(function(x){return x.id===id})[0]),1);tplDel=null;toast("Template deleted")}else tplDel=id;drawTpl();return}
+  if(c=e.target.closest("[data-te]")){if(e.target.closest("[data-tuse],[data-tcopy],[data-tdel]"))return;openEditor(TEMPLATES.filter(function(x){return x.id===c.dataset.te})[0],false);return}});
+$("#tplNew").addEventListener("click",function(){openEditor(T({name:"",product:""}),true)});
+$("#teCancel").addEventListener("click",function(){show("templates")});
+function okName(){if(!ED.name.trim()){toast("Enter a template name");return false}if(!ED.geos.length){toast("Pick at least one geo");return false}return true}
+$("#teSave").addEventListener("click",function(){if(!okName())return;if(EDID){var i=TEMPLATES.indexOf(TEMPLATES.filter(function(x){return x.id===EDID})[0]);ED.id=EDID;TEMPLATES[i]=ED}else{ED.id=nid("t");TEMPLATES.push(ED)}drawTpl();show("templates");toast("Template saved")});
+$("#teCopy").addEventListener("click",function(){if(!okName())return;var cp=JSON.parse(JSON.stringify(ED));cp.id=nid("t");if(EDID&&cp.name===(TEMPLATES.filter(function(x){return x.id===EDID})[0]||{}).name)cp.name+=" (copy)";TEMPLATES.push(cp);drawTpl();openEditor(cp,false);toast("Saved as a new template")});
+$("#teDel").addEventListener("click",function(){if(!EDID)return;if($("#teDel").textContent==="Delete"){$("#teDel").textContent="Confirm delete?";return}TEMPLATES.splice(TEMPLATES.indexOf(TEMPLATES.filter(function(x){return x.id===EDID})[0]),1);drawTpl();show("templates");toast("Template deleted")});
+function refreshAll(){gRev.draw();drawRv();syncPre();drawTpl();drawHome();drawAlerts()}
+drawTpl();gRev.draw();drawRv();
+
+
+/* ---------- Alerts by type (shared by Home and Alerts page) ---------- */
+var ACATS=[["Page","info"],["Ad account","warn"],["Rejection","risk"],["Task","ok"],["Review","info"],["Agent","mute"]],ACT="All",HCAT="All";
+var AGO={"Page":"pages","Ad account":"accounts","Rejection":"rules","Task":"tasks","Review":"review","Agent":"alerts"};
+var ALERTS=[
+ {id:101,cat:"Review",sev:"Medium",t:"Designer sent T-1041 with open AI issues",d:"1 headline close to limit. Other checks were already verified, so you can skip them.",w:"20 min ago",go:"review",btn:"Open Review queue"},
+ {id:1,cat:"Page",sev:"High",t:"Page moved to At risk",d:"Noah Price was No issues. It is used by 2 live campaigns. Suggested replacement: Julian Hayes (unused, No issues).",w:"12 min ago",go:"pages",btn:"Open pages"},
+ {id:2,cat:"Page",sev:"Medium",t:"Page now has Some issues",d:"Cole Elliot Bailey: restricted features. Not used in a live campaign.",w:"2 h ago",go:"pages",btn:"Open pages"},
+ {id:3,cat:"Ad account",sev:"High",t:"Ad account disabled",d:"1251416138410807 · VD 122 · 17 ads stopped",w:"1 h ago",go:"accounts",btn:"Open accounts"},
+ {id:4,cat:"Ad account",sev:"Medium",t:"Card verification timed out",d:"1673515281151662 · retry 1 of 2 sent to supplier",w:"2 h ago",go:"accounts",btn:"Open accounts"},
+ {id:5,cat:"Rejection",sev:"High",t:"Rule found 9 rejected ads",d:"Hourly check is waiting for your approval to replace them.",w:"20 min ago",go:"rules",btn:"Open rules"},
+ {id:6,cat:"Rejection",sev:"Medium",t:"Ad rejected 3 times",d:"T-1038 · 2 ads passed the max attempts and need attention.",w:"Yesterday",go:"rules",btn:"Open rules"},
+ {id:7,cat:"Task",sev:"Info",t:"Campaign published",d:"T-1037 · 30 ads · task center shows 30 of 30",w:"Yesterday",go:"tasks",btn:"Open tasks"},
+ {id:8,cat:"Task",sev:"High",t:"Publish failed on 2 ads",d:"T-1036 · agent retried twice. Check the task.",w:"3 h ago",go:"tasks",btn:"Open tasks"},
+ {id:9,cat:"Review",sev:"Medium",t:"Task ready to verify",d:"T-1042 · supplier and designer both submitted.",w:"40 min ago",go:"review",btn:"Open review"},
+ {id:10,cat:"Review",sev:"Info",t:"Master sent a task back",d:"T-1034: change the daily budget and resubmit.",w:"4 h ago",go:"review",btn:"Open review"},
+ {id:11,cat:"Agent",sev:"Medium",t:"Agent needs a human",d:"CAPTCHA on profile P-07 login. Enter it in the agent window.",w:"40 min ago",go:"alerts",btn:"Acknowledge"}];
+var AREAD={},APREF={};ACATS.forEach(function(c){APREF[c[0]]=[1,c[0]==="Page"||c[0]==="Rejection"||c[0]==="Agent"?1:0]});
+function acTone(c){return ACATS.filter(function(x){return x[0]===c})[0][1]}
+function unread(){return ALERTS.filter(function(a){return!AREAD[a.id]})}
+function alertRow(a,compact){return '<div class="it" style="'+(AREAD[a.id]?"opacity:.6":"")+'"><span class="pill '+(a.sev==="High"?"risk":a.sev==="Medium"?"warn":"info")+'">'+a.sev+'</span><div><b>'+a.t+'</b> <span class="pill '+acTone(a.cat)+'" style="font-size:11px;padding:0 6px">'+a.cat+'</span><div class="meta">'+a.d+'</div><div class="act"><button class="btn p sm" data-alg="'+a.id+'">'+a.btn+'</button>'+(compact?'':(AREAD[a.id]?'<button class="btn sm" data-alu="'+a.id+'">Mark unread</button>':'<button class="btn sm" data-alr="'+a.id+'">Mark read</button>'))+'</div></div><span class="meta">'+a.w+'</span></div>'}
+function catTabs(sel,attr){var un=unread();return [["All",""]].concat(ACATS).map(function(c){var n=un.filter(function(a){return c[0]==="All"||a.cat===c[0]}).length;return '<button class="chip '+(c[0]===sel?"on":"")+'" '+attr+'="'+c[0]+'">'+c[0]+' <span class="cnt">'+n+'</span></button>'}).join("")}
+function drawAlerts(){var sev=$("#alSev").value,rd=$("#alRead").value;$("#nAl").textContent=unread().length;
+  $("#alTabs").innerHTML=catTabs(ACT,"data-alc");
+  var list=ALERTS.filter(function(a){return(ACT==="All"||a.cat===ACT)&&(!sev||a.sev===sev)&&(!rd||!AREAD[a.id])});
+  $("#feed").innerHTML=list.map(function(a){return alertRow(a)}).join("")||'<div class="it"><div>No alerts here.</div></div>';
+  $("#prefs").innerHTML=ACATS.map(function(c){return '<tr><td>'+c[0]+'</td><td><input type="checkbox" data-pf="'+c[0]+'|0" aria-label="'+c[0]+' dashboard" '+(APREF[c[0]][0]?"checked":"")+'></td><td><input type="checkbox" data-pf="'+c[0]+'|1" aria-label="'+c[0]+' telegram" '+(APREF[c[0]][1]?"checked":"")+'></td></tr>'}).join("");
+  $("#hmTabs").innerHTML=catTabs(HCAT,"data-hc");
+  var hl=ALERTS.filter(function(a){return(HCAT==="All"||a.cat===HCAT)&&!AREAD[a.id]}).slice(0,4);
+  $("#hmFeed").innerHTML=hl.map(function(a){return alertRow(a,true)}).join("")||'<div class="it"><div>Nothing unread here.</div></div>'}
+document.addEventListener("click",function(e){var c;
+  if(c=e.target.closest("[data-alc]")){ACT=c.dataset.alc;drawAlerts();return}
+  if(c=e.target.closest("[data-hc]")){HCAT=c.dataset.hc;drawAlerts();return}
+  if(c=e.target.closest("[data-gal]")){ACT=HCAT;show("alerts");drawAlerts();return}
+  if(c=e.target.closest("[data-alg]")){var a=ALERTS.filter(function(x){return x.id==+c.dataset.alg})[0];AREAD[a.id]=1;show(a.go);drawAlerts();drawHome();return}
+  if(c=e.target.closest("[data-alr]")){AREAD[c.dataset.alr]=1;drawAlerts();drawHome();return}
+  if(c=e.target.closest("[data-alu]")){delete AREAD[c.dataset.alu];drawAlerts();drawHome()}});
+document.addEventListener("change",function(e){var p=e.target.closest("[data-pf]");if(p){var k=p.dataset.pf.split("|");APREF[k[0]][+k[1]]=p.checked?1:0}});
+$("#alSev").addEventListener("change",drawAlerts);$("#alRead").addEventListener("change",drawAlerts);
+$("#alAll").addEventListener("click",function(){ALERTS.forEach(function(a){AREAD[a.id]=1});drawAlerts();drawHome();toast("All marked read")});
+
+/* ---------- Home ---------- */
+function spark(vals,col){var w=70,h=26,mx=Math.max.apply(null,vals),mn=Math.min.apply(null,vals),pts=vals.map(function(v,i){return (i*(w/(vals.length-1))).toFixed(1)+","+(h-2-(mx===mn?0.5:(v-mn)/(mx-mn))*(h-4)).toFixed(1)}).join(" ");return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>'}
+function drawHome(){var rv=REVIEW.filter(function(r){return r.stage==="In review"}).length,un=unread().length;
+  $("#heroSum").textContent=un+" unread alerts · "+rv+" tasks waiting in your review · 9 rejected ads waiting for your approval";
+  var K=[["Live campaigns","14","+2 today","var(--ok)","▶","var(--ok-bg)","var(--ok)","live",[9,10,10,11,12,12,14]],["Tasks in review",String(rv),rv?"Open the queue":"All clear","var(--warn)","✓","var(--warn-bg)","var(--warn)","review",[2,3,1,4,2,3,rv]],["Disapproved ads","37","−12 vs yesterday","var(--ok)","!","var(--risk-bg)","var(--risk)","rules",[61,55,58,49,52,49,37]],["Solve rate","94%","+3 this week","var(--ok)","↻","var(--info-bg)","var(--accent)","rules",[88,90,89,92,91,93,94]]];
+  $("#kpis").innerHTML=K.map(function(k){return '<button class="kp" data-go="'+k[7]+'"><span class="ic2" style="background:'+k[5]+';color:'+k[6]+'">'+k[4]+'</span><span><small>'+k[0]+'</small><b>'+k[1]+'</b><span class="dl" style="color:'+k[3]+'">'+k[2]+'</span></span>'+spark(k[8],k[6])+'</button>'}).join("");
+  $("#homePipe").innerHTML=STAGES.map(function(s,i){var n=TASKS.filter(function(t){return t.s===i}).length;return '<button class="'+(n?"has":"")+'" data-stg="'+s+'"><b>'+n+'</b><span>'+s+'</span></button>'}).join("");
+  var D=[["Wed",2410],["Thu",2790],["Fri",3050],["Sat",2680],["Sun",2210],["Mon",2960],["Tue",3120]],mx=3400,W=560,H=170,L=44,bw=44,gap=(W-L-D.length*bw)/(D.length+1),svg='<svg viewBox="0 -8 '+W+' '+(H+34)+'" width="100%" role="img" aria-label="Spend per day, last 7 days">';
+  [0,1700,3400].forEach(function(v){var y=H-v/mx*H;svg+='<line x1="'+L+'" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/><text x="0" y="'+(y+3)+'" font-size="10" fill="var(--mut)">$'+v+'</text>'});
+  D.forEach(function(d,i){var x=L+gap+i*(bw+gap),h=d[1]/mx*H,t=i===D.length-1;svg+='<g><title>'+d[0]+': $'+d[1]+'</title><rect x="'+x+'" y="'+(H-h)+'" width="'+bw+'" height="'+h+'" rx="4" fill="'+(t?"var(--accent)":"var(--accent-soft)")+'" stroke="var(--accent)" stroke-width="1"/><text x="'+(x+bw/2)+'" y="'+(H+16)+'" text-anchor="middle" font-size="11" fill="var(--mut)">'+d[0]+'</text></g>'});
+  $("#spendChart").innerHTML=svg+'</svg>';
+  var PH=[["No issues",9,"var(--ok)"],["Some issues",2,"var(--warn)"],["At risk",2,"var(--risk)"],["Suspended",1,"var(--dead-bg)"]],tot=14;
+  $("#pgHealth").innerHTML='<div class="hbar">'+PH.map(function(p){return '<i style="width:'+(p[1]/tot*100)+'%;background:'+p[2]+'" title="'+p[0]+': '+p[1]+'"></i>'}).join("")+'</div><div class="lg">'+PH.map(function(p){return '<button data-pgs="'+p[0]+'"><i style="background:'+p[2]+'"></i>'+p[0]+' <b class="mono">'+p[1]+'</b></button>'}).join("")+'</div>'}
+document.addEventListener("click",function(e){var c;if(c=e.target.closest("[data-stg]")){tf=c.dataset.stg;drawTasks();show("tasks");return}if(c=e.target.closest("[data-pgs]")){pgF=c.dataset.pgs;drawPages();show("pages")}});
+drawAlerts();drawHome();
+
+show((location.hash||"#overview").slice(1));
+</script>
+
+</body></html>
